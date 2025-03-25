@@ -158,7 +158,7 @@ function Page() {
             <div className={styles.calendarBox_calendar}>
               {/* 캘린더 UI */}
               <LabelCalendar label="From" required={true} />
-              <LabelCalendar label="To" />
+              <LabelCalendar label="To" required={false} />
             </div>
             {/* 보드 추가 버튼 */}
             <Button

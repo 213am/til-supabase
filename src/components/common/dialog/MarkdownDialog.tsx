@@ -1,9 +1,13 @@
 "use client";
-import MDEditor from "@uiw/react-md-editor";
+import { useState } from "react";
 import LabelCalendar from "../calendar/LabelCalendar";
+import { createTodo } from "@/app/actions/todo-actions";
+// css
+import styles from "@/components/common/dialog/MarkdownDialog.module.scss";
+// Markdown
+import MDEditor from "@uiw/react-md-editor";
 // shadcn/ui
 import { Separator } from "@/components/ui/separator";
-
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -17,16 +21,11 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-// css
-import styles from "@/components/common/dialog/MarkdownDialog.module.scss";
-import { useState } from "react";
-import { createTodo } from "@/app/actions/todo-actions";
-
 function MarkdownDialog() {
   const [open, setOpen] = useState<boolean>(false);
   // 추가
   const [title, setTitle] = useState<string>("");
-
+  // Editor 의 본문 내용
   const [content, setContent] = useState<string | undefined>("");
 
   // supabase 추가 버튼
@@ -78,17 +77,13 @@ function MarkdownDialog() {
             </div>
           </DialogTitle>
           <div className={styles.dialog_calendarBox}>
-            <LabelCalendar label="From" />
-            <LabelCalendar label="To" />
+            <LabelCalendar label="From" required={false} />
+            <LabelCalendar label="To" required={false} />
           </div>
           <Separator />
           {/* 마크다운 입력 영역 */}
           <div className={styles.dialog_markdown}>
-            <MDEditor
-              height={100 + "%"}
-              value={content}
-              onChange={setContent}
-            />
+            <MDEditor height={"100%"} value={content} onChange={setContent} />
           </div>
         </DialogHeader>
         <DialogFooter>
@@ -103,10 +98,11 @@ function MarkdownDialog() {
             </DialogClose>
             <Button
               type="submit"
+              variant="ghost"
               className="font-normal border-orange-500 bg-orange-400 text-white hover:bg-orange-500 hover:text-white"
               onClick={onSubmit}
             >
-              Done
+              Save
             </Button>
           </div>
         </DialogFooter>
