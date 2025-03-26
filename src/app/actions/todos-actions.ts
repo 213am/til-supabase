@@ -14,7 +14,7 @@ function handleError(error: unknown): never {
   throw new Error("An unknown error occurred");
 }
 
-export async function createTodo(todos: TodoRowInsert): Promise<{
+export async function createTodo(todo: TodoRowInsert): Promise<{
   data: TodoRow[] | null;
   error: Error | null;
   status: number;
@@ -23,8 +23,16 @@ export async function createTodo(todos: TodoRowInsert): Promise<{
 
   const { data, error, status } = await supabase
     .from("todos")
-    .insert([{ title: todos.title, content: todos.content }])
-    .select();
+    .insert([
+      {
+        title: todo.title,
+        contents: todo.contents,
+        start_date: todo.start_date,
+        end_date: todo.end_date,
+      },
+    ])
+    .select()
+    .single();
   console.log(status);
 
   return { data, error, status };
@@ -40,18 +48,34 @@ export async function getTodos() {
   };
 }
 
-export async function updateTodo({
-  content,
-  id,
-}: {
-  content: string;
-  id: number;
-}) {
+// Read 기능 id 한개 가져오기
+export async function getTodoId(id: number) {
   const supabase = await createServerSideClient();
   const { data, error, status } = await supabase
     .from("todos")
-    .update({ content: content }) // contents 는 배열로 들어온다.
+    .select()
     .eq("id", id)
-    .select();
-  return { data, error, status };
+    .single();
+  return { data, error, status } as {
+    data: TodoRow | null;
+    error: Error | null;
+    status: number;
+  };
+}
+
+// 업데이트 기능
+export async function updateTodo(id: number, contents: string) {
+  const supabase = await createServerSideClient();
+  const { data, error, status } = await supabase
+    .from("todos")
+    .update({ contents: contents })
+    .eq("id", id)
+    .select()
+    .single();
+
+  return { data, error, status } as {
+    data: TodoRow | null;
+    error: Error | null;
+    status: number;
+  };
 }
