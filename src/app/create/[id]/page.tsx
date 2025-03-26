@@ -1,7 +1,7 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { createTodo, getTodos, updateTodo } from "@/app/actions/todo-actions";
+import { createTodo, getTodos, updateTodo } from "@/app/actions/todos-actions";
 import Image from "next/image";
 
 import BasicBoard from "@/components/common/board/BasicBoard";
@@ -121,9 +121,9 @@ function Page() {
           const parsedItem = {
             ...item,
             contents:
-              typeof item.contents === "string"
-                ? JSON.parse(item.contents)
-                : item.contents,
+              typeof item.content === "string"
+                ? JSON.parse(item.content)
+                : item.content,
           };
           setBoards(parsedItem as Todo);
         }

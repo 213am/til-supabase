@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import LabelCalendar from "../calendar/LabelCalendar";
-import { createTodo } from "@/app/actions/todo-actions";
+import { createTodo } from "@/app/actions/todos-actions";
 // css
 import styles from "@/components/common/dialog/MarkdownDialog.module.scss";
 // Markdown
@@ -22,10 +22,11 @@ import {
 import { toast } from "sonner";
 
 function MarkdownDialog() {
+  //  Dialog Props
   const [open, setOpen] = useState<boolean>(false);
-  // 추가
-  const [title, setTitle] = useState<string>("");
-  // Editor 의 본문 내용
+  //  Editor 의 제목
+  const [title, setTitle] = useState<string | undefined>("");
+  //  Editor 의 본문 내용
   const [content, setContent] = useState<string | undefined>("");
 
   // supabase 추가 버튼
@@ -33,32 +34,37 @@ function MarkdownDialog() {
     if (!title || !content) {
       toast.error("입력항목을 확인해주세요.", {
         description: "제목과 내용을 입력해주세요.",
-        duration: 3000, // 3초 후 자동 사라짐 (옵션)
+        duration: 3000,
       });
       return;
     }
 
-    // supabase 추가
-    const data = await createTodo({ title, contents });
+    // 서버액션 실행
+    const { data, error, status } = await createTodo({ title, content });
     console.log(data);
-    if (data.error) {
-      toast.error("Error", {
-        description: "Supabase에 글이 등록되지 않았습니다.",
-        duration: 3000, // 3초 후 자동 사라짐 (옵션)
+    console.log(error);
+    console.log(status);
+
+    if (error) {
+      toast.error("등록 중 오류 발생", {
+        description: `Error ${error.message}`,
+        duration: 3000,
       });
       return;
     }
-    toast.success("Success", {
+    toast.success("등록 성공!", {
       description: "Supabase에 글이 등록되었습니다.",
-      duration: 3000, // 3초 후 자동 사라짐 (옵션)
+      duration: 3000,
     });
     setOpen(false);
+    setTitle("");
+    setContent("");
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <span className="font-normal text-gray-400 hover:text-gray-500 cursor-pointer">
+        <span className="flex w-full justify-center font-normal text-gray-400 hover:text-gray-500 cursor-pointer">
           Add Content
         </span>
       </DialogTrigger>
