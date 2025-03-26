@@ -104,7 +104,6 @@ function MarkdownDialog({ item, updateContent }: BasicBoardProps) {
             </div>
           </DialogTitle>
           <div className={styles.dialog_calendarBox}>
-            {/* 잠시 뒤 날짜 전달 */}
             <LabelCalendar
               label="From"
               required={false}

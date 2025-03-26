@@ -1,11 +1,10 @@
+import { BoardContents } from "@/app/create/[id]/page";
 import styles from "@/components/common/board/BasicBoard.module.scss";
+import MarkdownDialog from "@/components/common/dialog/MarkdownDialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronUp } from "lucide-react";
-import LabelCalendar from "@/components/common/calendar/LabelCalendar";
-import MarkdownDialog from "@/components/common/dialog/MarkdownDialog";
-import { BoardContents } from "@/app/create/[id]/page";
 import { Input } from "@/components/ui/input";
+import { ChevronUp } from "lucide-react";
 
 export interface BasicBoardProps {
   item: BoardContents;
