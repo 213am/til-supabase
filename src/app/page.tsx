@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { createTodo } from "./actions/todos-actions";
 import { toast } from "sonner";
+import { useEffect } from "react";
 
 function Home() {
   const router = useRouter();
@@ -32,6 +33,7 @@ function Home() {
     // http://localhost:3000/create/[data.id] 로 이동
     router.push(`/create/${data?.id}`);
   };
+
   return (
     <div className={styles.container}>
       <div className={styles.container_onBoarding}>

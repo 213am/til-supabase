@@ -1,5 +1,7 @@
 "use client";
 import { createTodo, getTodos, TodoRow } from "@/app/actions/todos-actions";
+import { useAtom } from "jotai";
+import { sidebarStateAtom } from "@/app/store";
 import styles from "@/components/common/navigation/SideNavigation.module.scss";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +13,8 @@ import { toast } from "sonner";
 function SideNavigation() {
   const router = useRouter();
   const [todos, setTodos] = useState<TodoRow[] | null>([]);
+  // jotai 상태 사용하기
+  const [sidebarState, setSidebarState] = useAtom(sidebarStateAtom);
 
   // Create
   const onCreate = async () => {
@@ -35,6 +39,7 @@ function SideNavigation() {
     // 데이터 추가 성공시 할일 등록창으로 이동시킴
     // http://localhost:3000/create/[data.id] 로 이동
     router.push(`/create/${data?.id}`);
+    setSidebarState("newPage");
   };
 
   // Read
@@ -60,7 +65,17 @@ function SideNavigation() {
 
   useEffect(() => {
     fetchGetTodos();
-  }, []);
+  }, []); // ← 초기 마운트에도 실행
+
+  useEffect(() => {
+    if (sidebarState !== "default") {
+      fetchGetTodos();
+
+      if (sidebarState === "Page Delete") {
+        router.push("/");
+      }
+    }
+  }, [sidebarState]);
 
   return (
     <div className={styles.container}>

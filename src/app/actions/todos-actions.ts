@@ -40,7 +40,10 @@ export async function createTodo(todo: TodoRowInsert): Promise<{
 
 export async function getTodos() {
   const supabase = await createServerSideClient();
-  const { data, error, status } = await supabase.from("todos").select("*");
+  const { data, error, status } = await supabase
+    .from("todos")
+    .select("*")
+    .order("id", { ascending: false });
   return { data, error, status } as {
     data: TodoRow[] | null;
     error: Error | null;
@@ -81,11 +84,20 @@ export async function updateTodo(id: number, contents: string) {
 }
 
 // Title 업데이트 함수
-export async function updateTodoTitle(id: number, title: string) {
+export async function updateTodoTitle(
+  id: number,
+  title: string,
+  startDate: Date | string,
+  endDate: Date | string
+) {
   const supabase = await createServerSideClient();
   const { data, error, status } = await supabase
     .from("todos")
-    .update({ title: title })
+    .update({
+      title: title,
+      start_date: new Date(startDate).toISOString(),
+      end_date: new Date(endDate).toISOString(),
+    })
     .eq("id", id)
     .select()
     .single();

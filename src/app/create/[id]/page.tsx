@@ -20,6 +20,8 @@ import { toast } from "sonner";
 import { nanoid } from "nanoid";
 import Image from "next/image";
 import { ChevronLeftIcon } from "lucide-react";
+import { sidebarStateAtom } from "@/app/store";
+import { useAtom } from "jotai";
 
 // contents 배열에 대한 타입 정의
 export interface BoardContents {
@@ -41,6 +43,8 @@ function Page() {
   const [endDate, setEndDate] = useState<string | Date>("");
   // Progress Bar 처리
   const [completeCount, setCompleteCount] = useState<number>(0);
+  // jotai 상태 사용하기
+  const [sidebarState, setSidebarState] = useAtom(sidebarStateAtom);
 
   // Page 삭제 함수
   const deleteBoardHandler = async () => {
@@ -49,17 +53,23 @@ function Page() {
 
     console.log(error);
     console.log(status);
-
-    router.push("/");
+    if (!error) {
+      setSidebarState("Page Delete");
+    }
   };
 
   // title 저장 함수
   const saveTitleHandler = async () => {
     console.log(title);
-    const { data, error, status } = await updateTodoTitle(Number(id), title);
-    console.log(data);
-    console.log(error);
-    console.log(status);
+    const { data, error, status } = await updateTodoTitle(
+      Number(id),
+      title,
+      startDate,
+      endDate
+    );
+
+    // jotai 의 state 갱신
+    setSidebarState("Upadte Page");
   };
 
   // 컨텐츠 삭제 함수
@@ -172,7 +182,6 @@ function Page() {
   }, []);
 
   useEffect(() => {
-    console.log("카운팅");
     calcCompletedCount();
   }, [contents]);
 
@@ -231,9 +240,9 @@ function Page() {
               />
               <LabelCalendar
                 label="To"
-                required={true}
-                selectedDate={startDate}
-                onDateChange={setStartDate}
+                required={false}
+                selectedDate={endDate}
+                onDateChange={setEndDate}
               />
             </div>
             <Button
