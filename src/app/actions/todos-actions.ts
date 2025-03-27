@@ -79,3 +79,31 @@ export async function updateTodo(id: number, contents: string) {
     status: number;
   };
 }
+
+// Title 업데이트 함수
+export async function updateTodoTitle(id: number, title: string) {
+  const supabase = await createServerSideClient();
+  const { data, error, status } = await supabase
+    .from("todos")
+    .update({ title: title })
+    .eq("id", id)
+    .select()
+    .single();
+
+  return { data, error, status } as {
+    data: TodoRow | null;
+    error: Error | null;
+    status: number;
+  };
+}
+
+// Page 삭제 함수
+export async function deleteTodo(id: number) {
+  const supabase = await createServerSideClient();
+  const { error, status } = await supabase.from("todos").delete().eq("id", id);
+
+  return { error, status } as {
+    error: Error | null;
+    status: number;
+  };
+}

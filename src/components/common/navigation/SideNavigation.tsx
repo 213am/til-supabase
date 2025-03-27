@@ -87,7 +87,10 @@ function SideNavigation() {
       </div>
       {/* 추가 항목 출력 영역 */}
       <div className={styles.container_todos}>
-        <div className={styles.container_todos_label}>Your Todo</div>
+        <div className={styles.container_todos_label}>
+          {/* 로그아웃 버튼 배치 */}
+          {"홍길동"}님의 할일 목록
+        </div>
         <div className={styles.container_todos_list}>
           {todos?.map((item) => (
             <div

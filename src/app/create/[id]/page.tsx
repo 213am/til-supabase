@@ -1,9 +1,14 @@
 "use client";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 // scss
 import styles from "@/app/create/[id]/page.module.scss";
 // action
-import { getTodoId, updateTodo } from "@/app/actions/todos-actions";
+import {
+  deleteTodo,
+  getTodoId,
+  updateTodo,
+  updateTodoTitle,
+} from "@/app/actions/todos-actions";
 // component
 import BasicBoard from "@/components/common/board/BasicBoard";
 // shadcn/ui
@@ -14,6 +19,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { nanoid } from "nanoid";
 import Image from "next/image";
+import { ChevronLeftIcon } from "lucide-react";
 
 // contents 배열에 대한 타입 정의
 export interface BoardContents {
@@ -26,12 +32,47 @@ export interface BoardContents {
 }
 
 function Page() {
+  const router = useRouter();
   const { id } = useParams();
   // 데이터 출력 state
-  const [title, setTitle] = useState<string | null>("");
+  const [title, setTitle] = useState<string>("");
   const [contents, setContents] = useState<BoardContents[]>([]);
   const [startDate, setStartDate] = useState<string | Date>("");
   const [endDate, setEndDate] = useState<string | Date>("");
+
+  // Page 삭제 함수
+  const deleteBoardHandler = async () => {
+    console.log(id, "삭제하기");
+    const { error, status } = await deleteTodo(Number(id));
+
+    console.log(error);
+    console.log(status);
+
+    router.push("/");
+  };
+
+  // title 저장 함수
+  const saveTitleHandler = async () => {
+    console.log(title);
+    const { data, error, status } = await updateTodoTitle(Number(id), title);
+    console.log(data);
+    console.log(error);
+    console.log(status);
+  };
+
+  // 컨텐츠 삭제 함수
+  const deleteContent = async (deleteBoardId: string) => {
+    console.log("삭제할 컨텐츠 boardId", deleteBoardId);
+    const tempContent = contents.filter(
+      (item) => item.boardId !== deleteBoardId
+    );
+
+    const { data, error, status } = await updateTodo(
+      Number(id),
+      JSON.stringify(tempContent)
+    );
+    setContents([...tempContent]);
+  };
 
   // 컨텐츠 데이터 업데이트 함수
   const updateContent = async (newData: BoardContents) => {
@@ -119,6 +160,22 @@ function Page() {
 
   return (
     <div className={styles.container}>
+      {/* Board 메뉴 */}
+      <div className="absolute top-0 left-0 flex w-full items-center justify-center p-6">
+        <div className="flex-1">
+          <Button variant={"outline"} onClick={() => router.push("/")}>
+            <ChevronLeftIcon className="w-4 h-4" />
+          </Button>
+        </div>
+        <div className="flex gap-2">
+          <Button variant={"outline"} onClick={saveTitleHandler}>
+            저장
+          </Button>
+          <Button variant={"destructive"} onClick={deleteBoardHandler}>
+            삭제
+          </Button>
+        </div>
+      </div>
       {/* 상단 */}
       <header className={styles.container_header}>
         <div className={styles.container_header_contents}>
@@ -126,6 +183,8 @@ function Page() {
             type="text"
             placeholder="Enter Title Here"
             className={styles.input}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
           />
           {/* 진행율 */}
           <div className={styles.progressBar}>
@@ -191,6 +250,7 @@ function Page() {
                 key={item.boardId}
                 item={item}
                 updateContent={updateContent}
+                deleteContent={deleteContent}
               />
             ))}
           </div>
