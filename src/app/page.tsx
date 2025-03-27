@@ -2,12 +2,16 @@
 import styles from "@/app/page.module.scss";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { createTodo } from "./actions/todos-actions";
+import { createTodo, getTodos } from "./actions/todos-actions";
 import { toast } from "sonner";
 import { useEffect } from "react";
+import { useAtom } from "jotai";
+import { sidebarStateAtom } from "./store";
 
 function Home() {
   const router = useRouter();
+  // jotai 상태 사용하기
+  const [sidebarState, setSidebarState] = useAtom(sidebarStateAtom);
 
   // Create
   const onCreate = async () => {
@@ -33,6 +37,13 @@ function Home() {
     // http://localhost:3000/create/[data.id] 로 이동
     router.push(`/create/${data?.id}`);
   };
+
+  useEffect(() => {
+    if (sidebarState !== "default") {
+      getTodos();
+      setSidebarState("default");
+    }
+  }, []);
 
   return (
     <div className={styles.container}>
