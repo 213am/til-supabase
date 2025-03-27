@@ -1,173 +1,157 @@
-# Delete
+# Test
 
-- `/src/app/create/[id]/page.tsx`
+## 1. 목록에서 Page 이동하기
+
+- `src/components/common/navigation/SideNavigation.tsx`
 
 ```tsx
-// 컨텐츠 삭제 함수
-const deleteContent = (deleteBoardId: string) => {
-  console.log("삭제할 컨텐츠 boardId", deleteBoardId);
-  const tempContent = contents.filter((item) => item.boardId !== deleteBoardId);
-  setContents([...tempContent]);
+{
+  todos?.map((item) => (
+    <div
+      key={item.id}
+      className="flex items-center py-2 bg-[#f5f5f4] rounded-sm cursor-pointer"
+      onClick={() => router.push(`/create/${item.id}`)}
+    >
+      <Dot className="mr-1 text-green-400" />
+      <span className="text-sm">{item.title ? item.title : "No title"}</span>
+    </div>
+  ));
+}
+```
+
+## 2. Page 에서 목록 스크롤 시키기
+
+- `src/app/create/[id]/page.tsx`
+
+```tsx
+<div className="flex flex-col items-center justify-start w-full h-full gap-4 overflow-y-auto">
+  {contents.map((item) => (
+    <BasicBoard
+      key={item.boardId}
+      item={item}
+      updateContent={updateContent}
+      deleteContent={deleteContent}
+    />
+  ))}
+</div>
+```
+
+- `src/app/globals.css`
+
+```css
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    scrollbar-width: none;  // 스크롤바 숨김
+  }
+  ::-webkit-scrollbar {
+    display: none;  // 스크롤바 숨김
+  }
+  body {
+    @apply bg-background text-foreground;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+  }
+}
+```
+
+## 3. progress 정리하기
+
+- `src/app/create/[id]/page.tsx`
+
+```tsx
+// Progress Bar 처리
+const [completeCount, setCompleteCount] = useState<number>(0);
+```
+
+```tsx
+{
+  /* 진행율 */
+}
+<div className={styles.progressBar}>
+  <span className={styles.progressBar_status}>
+    {completeCount}/{contents.length} completed!
+  </span>
+  {/* Progress 컴포넌트 배치 */}
+  <Progress value={33} className="w-[30%] h-2" indicateColor="bg-orange-500" />
+</div>;
+```
+
+```tsx
+// contents 의 isCompleted 가 true 인 갯수 파악하기
+const calcCompletedCount = () => {
+  let count = 0;
+  contents.map((item) => {
+    if (item.isCompleted) {
+      count++;
+    }
+  });
+  setCompleteCount(count);
 };
 ```
+
+## 4. checkbox 처리 필요
 
 - `src/components/common/board/BasicBoard.tsx`
 
 ```tsx
-export interface BasicBoardProps {
-  item: BoardContents;
-  updateContent: (newData: BoardContents) => void;
-  deleteContent: (boardId: string) => void;
-}
+const [isComplted, setIsCompleted] = useState<boolean>(item.isCompleted);
 ```
 
 ```tsx
-function BasicBoard({ item, updateContent, deleteContent }: BasicBoardProps) {}
-```
-
-```tsx
-<Button
-  variant={"ghost"}
-  className="font-normal text-gray-400 hover:bg-red-500 hover:text-white"
-  onClick={() => deleteContent(item.boardId)}
->
-  Delete
-</Button>
-```
-
-## 필터링 contents 를 업데이트 진행
-
-- `src/app/create/[id]/page.tsx`
-
-```tsx
-// 컨텐츠 삭제 함수
-const deleteContent = async (deleteBoardId: string) => {
-  console.log("삭제할 컨텐츠 boardId", deleteBoardId);
-  const tempContent = contents.filter((item) => item.boardId !== deleteBoardId);
-  setContents([...tempContent]);
-
-  const { data, error, status } = await updateTodo(
-    Number(id),
-    JSON.stringify(tempContent)
-  );
-};
-```
-
-# Home 버튼, page 수정 버튼, page 삭제 버튼 레이아웃 배치
-
-- `src/app/create/[id]/page.tsx`
-
-```tsx
-{
-  /* Board 메뉴 */
-}
-<div className="absolute top-0 left-0 flex w-full items-center justify-center p-6">
-  <div className="flex-1">
-    <Button variant={"outline"}>
-      <ChevronLeftIcon className="w-4 h-4" />
-    </Button>
-  </div>
-  <div className="flex gap-2">
-    <Button variant={"outline"}>저장</Button>
-    <Button variant={"destructive"}>삭제</Button>
-  </div>
-</div>;
-```
-
-## Home 버튼 기능
-
-```tsx
-import { useRouter } from "next/navigation";
-
-const router = useRouter();
-
-<Button variant={"outline"} onClick={() => router.push("/")}>
-  <ChevronLeftIcon className="w-4 h-4" />
-</Button>;
-```
-
-## 저장 버튼 기능
-
-```tsx
-<input
-  type="text"
-  placeholder="Enter Title Here"
-  className={styles.input}
-  value={title}
-  onChange={(e) => setTitle(e.target.value)}
+<Checkbox
+  className="w-5 h-5"
+  checked={isComplted}
+  onCheckedChange={() => {
+    item.isCompleted = !item.isCompleted;
+    updateContent(item);
+    setIsCompleted(item.isCompleted);
+  }}
 />
 ```
 
-## Title 수정하는 서버 액션 함수 정의
-
-- `src/app/actions/todos-actions.ts`
-
-```ts
-// Title 업데이트 함수
-export async function updateTodoTitle(id: number, title: string) {
-  const supabase = await createServerSideClient();
-  const { data, error, status } = await supabase
-    .from("todos")
-    .update({ title: title })
-    .eq("id", id)
-    .select()
-    .single();
-
-  return { data, error, status } as {
-    data: TodoRow | null;
-    error: Error | null;
-    status: number;
-  };
-}
-```
-
-## Title 업데이트 함수 활용
+- `src/components/common/dialog/MarkdownDialog.tsx`
 
 ```tsx
-// title 저장 함수
-const saveTitleHandler = async () => {
-  console.log(title);
-  const { data, error, status } = await updateTodoTitle(Number(id), title);
-  console.log(data);
-  console.log(error);
-  console.log(status);
-};
-```
-
-## Row 를 삭제하는 함수
-
-- `src/app/actions/todos-actions.ts`
-
-```ts
-// Page 삭제 함수
-export async function deleteTodo(id: number) {
-  const supabase = await createServerSideClient();
-  const { error, status } = await supabase.from("todos").delete().eq("id", id);
-
-  return { error, status } as {
-    error: Error | null;
-    status: number;
-  };
-}
-```
-
-- `src/app/create/[id]/page.tsx`
-
-```tsx
-// Page 삭제 함수
-const deleteBoardHandler = async () => {
-  console.log(id, "삭제하기");
-  const { error, status } = await deleteTodo(Number(id));
-
-  console.log(error);
-  console.log(status);
-
-  router.push("/");
-};
+const [isCheckComplted, setIsCheckCompleted] = useState<boolean>(
+  item.isCompleted
+);
 ```
 
 ```tsx
-<Button variant={"destructive"} onClick={deleteBoardHandler}>
-  삭제
-</Button>
+<Checkbox
+  className="w-5 h-5"
+  checked={isCheckComplted}
+  onCheckedChange={() => {
+    setIsCheckCompleted(!isCheckComplted);
+  }}
+/>
+```
+
+- onSubmit
+
+```tsx
+ isCompleted: isCheckComplted,
+```
+
+## 출력하기
+
+```tsx
+<span className={styles.progressBar_status}>
+  {completeCount}/{contents.length} completed!
+</span>
+```
+
+```tsx
+<Progress
+  value={contents.length > 0 ? (completeCount / contents.length) * 100 : 0}
+  className="w-[30%] h-2"
+  indicateColor="bg-orange-500"
+/>
 ```

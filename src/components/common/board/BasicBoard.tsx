@@ -5,20 +5,35 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ChevronUp } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export interface BasicBoardProps {
   item: BoardContents;
   updateContent: (newData: BoardContents) => void;
-  deleteContent: (boardId: string) => void;
+  deleteContent?: (boardId: string) => void;
 }
 
 function BasicBoard({ item, updateContent, deleteContent }: BasicBoardProps) {
+  const [isCompleted, setIsCompleted] = useState<boolean>(false);
+
+  useEffect(() => {
+    setIsCompleted(item.isCompleted);
+  }, [item]);
+
   return (
     <div className={styles.container}>
       {/* 헤더 */}
       <div className={styles.container_header}>
         <div className={styles.container_header_titleBox}>
-          <Checkbox className="w-5 h-5" />
+          <Checkbox
+            className="w-5 h-5"
+            checked={isCompleted}
+            onCheckedChange={() => {
+              item.isCompleted = !item.isCompleted;
+              updateContent(item);
+              setIsCompleted(item.isCompleted);
+            }}
+          />
           <span className={styles.title}>
             {item.title ? item.title : "Please enter a title for your board"}
           </span>
@@ -51,7 +66,7 @@ function BasicBoard({ item, updateContent, deleteContent }: BasicBoardProps) {
           <Button
             variant={"ghost"}
             className="font-normal text-gray-400 hover:bg-red-500 hover:text-white"
-            onClick={() => deleteContent(item.boardId)}
+            onClick={() => deleteContent!(item.boardId)}
           >
             Delete
           </Button>

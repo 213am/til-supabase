@@ -41,7 +41,8 @@ function MarkdownDialog({ item, updateContent }: BasicBoardProps) {
   const [endDate, setEndDate] = useState<Date | string>(
     item.endDate ? item.endDate : new Date()
   );
-  const [isCompleted, setIsCompleted] = useState<boolean>(
+  const [isCompleted, setIsCompleted] = useState<boolean>(false);
+  const [isCheckCompleted, setIsCheckCompleted] = useState<boolean>(
     item.isCompleted ? item.isCompleted : false
   );
 
@@ -68,17 +69,12 @@ function MarkdownDialog({ item, updateContent }: BasicBoardProps) {
         typeof endDate === "string" ? new Date(endDate) : endDate,
         "yyyy-MM-dd"
       ),
-      isCompleted: isCompleted,
+      isCompleted: isCheckCompleted,
     };
     console.log("업데이트 할 데이터 : ", tempContent);
     updateContent(tempContent);
 
-    // 창닫기, 입력값 초기화
     setOpen(false);
-    // setTitle("");
-    // setContent("");
-    // setStartDate("");
-    // setEndDate("");
   };
 
   return (
@@ -93,7 +89,14 @@ function MarkdownDialog({ item, updateContent }: BasicBoardProps) {
         <DialogHeader>
           <DialogTitle>
             <div className={styles.dialog_titleBox}>
-              <Checkbox className="w-5 h-5" />
+              <Checkbox
+                className="w-5 h-5"
+                checked={isCheckCompleted}
+                onCheckedChange={() => {
+                  setIsCompleted(!isCompleted);
+                  setIsCheckCompleted(!isCompleted);
+                }}
+              />
               <input
                 type="text"
                 placeholder="Write a title for your board"
