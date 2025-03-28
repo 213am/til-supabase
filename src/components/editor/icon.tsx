@@ -2,143 +2,35 @@
 import { Editor } from "@tiptap/core";
 import styles from "./icon.module.css";
 
-// h1 아이콘 및 기능
-function H1({ editor }: { editor: Editor }) {
+// 공통 Heading 컴포넌트 생성기 (레벨별로)
+type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
+
+function Heading({ editor, level }: { editor: Editor; level: HeadingLevel }) {
   if (!editor) return null;
-  const isActive = editor.isActive("heading", { level: 1 });
-  const canToggle = editor
-    .can()
-    .chain()
-    .focus()
-    .toggleHeading({ level: 1 })
-    .run();
-  // 클릭 시 실행할 내용
+  const isActive = editor.isActive("heading", { level });
+  const canToggle = editor.can().chain().focus().toggleHeading({ level }).run();
   const handleClick = () => {
-    editor.chain().focus().toggleHeading({ level: 1 }).run();
+    editor.chain().focus().toggleHeading({ level }).run();
   };
   return (
     <button
       onClick={handleClick}
-      disabled={canToggle}
-      className={`${styles.toolbarBtn} ${styles.h1} ${isActive ? styles.active : styles.none}`}
-    ></button>
+      disabled={!canToggle}
+      className={`${styles.toolbarBtn} ${styles[`h${level}`]} ${isActive ? styles.active : styles.none}`}
+    />
   );
 }
-// h2 아이콘 및 기능
-function H2({ editor }: { editor: Editor }) {
-  if (!editor) return null;
-  const isActive = editor.isActive("heading", { level: 2 });
-  const canToggle = editor
-    .can()
-    .chain()
-    .focus()
-    .toggleHeading({ level: 2 })
-    .run();
-  // 클릭 시 실행할 내용
-  const handleClick = () => {
-    editor.chain().focus().toggleHeading({ level: 2 }).run();
-  };
-  return (
-    <button
-      onClick={handleClick}
-      disabled={canToggle}
-      className={`${styles.toolbarBtn} ${styles.h2} ${isActive ? styles.active : styles.none}`}
-    ></button>
-  );
-}
-// h3 아이콘 및 기능
-function H3({ editor }: { editor: Editor }) {
-  if (!editor) return null;
-  const isActive = editor.isActive("heading", { level: 3 });
-  const canToggle = editor
-    .can()
-    .chain()
-    .focus()
-    .toggleHeading({ level: 3 })
-    .run();
-  // 클릭 시 실행할 내용
-  const handleClick = () => {
-    editor.chain().focus().toggleHeading({ level: 3 }).run();
-  };
-  return (
-    <button
-      onClick={handleClick}
-      disabled={canToggle}
-      className={`${styles.toolbarBtn} ${styles.h3} ${isActive ? styles.active : styles.none}`}
-    ></button>
-  );
-}
-// h4 아이콘 및 기능
-function H4({ editor }: { editor: Editor }) {
-  if (!editor) return null;
-  const isActive = editor.isActive("heading", { level: 4 });
-  const canToggle = editor
-    .can()
-    .chain()
-    .focus()
-    .toggleHeading({ level: 4 })
-    .run();
-  // 클릭 시 실행할 내용
-  const handleClick = () => {
-    editor.chain().focus().toggleHeading({ level: 4 }).run();
-  };
-  return (
-    <button
-      onClick={handleClick}
-      disabled={canToggle}
-      className={`${styles.toolbarBtn} ${styles.h4} ${isActive ? styles.active : styles.none}`}
-    ></button>
-  );
-}
-// h5 아이콘 및 기능
-function H5({ editor }: { editor: Editor }) {
-  if (!editor) return null;
-  const isActive = editor.isActive("heading", { level: 5 });
-  const canToggle = editor
-    .can()
-    .chain()
-    .focus()
-    .toggleHeading({ level: 5 })
-    .run();
-  // 클릭 시 실행할 내용
-  const handleClick = () => {
-    editor.chain().focus().toggleHeading({ level: 5 }).run();
-  };
-  return (
-    <button
-      onClick={handleClick}
-      disabled={canToggle}
-      className={`${styles.toolbarBtn} ${styles.h5} ${isActive ? styles.active : styles.none}`}
-    ></button>
-  );
-}
-// h6 아이콘 및 기능
-function H6({ editor }: { editor: Editor }) {
-  if (!editor) return null;
-  const isActive = editor.isActive("heading", { level: 6 });
-  const canToggle = editor
-    .can()
-    .chain()
-    .focus()
-    .toggleHeading({ level: 6 })
-    .run();
-  // 클릭 시 실행할 내용
-  const handleClick = () => {
-    editor.chain().focus().toggleHeading({ level: 6 }).run();
-  };
-  return (
-    <button
-      onClick={handleClick}
-      disabled={canToggle}
-      className={`${styles.toolbarBtn} ${styles.h6} ${isActive ? styles.active : styles.none}`}
-    ></button>
-  );
-}
-// Bold 아이콘 및 기능
+
+const H1 = (props: { editor: Editor }) => <Heading {...props} level={1} />;
+const H2 = (props: { editor: Editor }) => <Heading {...props} level={2} />;
+const H3 = (props: { editor: Editor }) => <Heading {...props} level={3} />;
+const H4 = (props: { editor: Editor }) => <Heading {...props} level={4} />;
+const H5 = (props: { editor: Editor }) => <Heading {...props} level={5} />;
+const H6 = (props: { editor: Editor }) => <Heading {...props} level={6} />;
+
 function Bold({ editor }: { editor: Editor }) {
   if (!editor) return null;
   const isActive = editor.isActive("bold");
-  // 클릭 시 실행할 내용
   const handleClick = () => {
     editor.chain().focus().toggleBold().run();
   };
@@ -147,14 +39,13 @@ function Bold({ editor }: { editor: Editor }) {
       onClick={handleClick}
       disabled={!editor.can().chain().focus().toggleBold().run()}
       className={`${styles.toolbarBtn} ${styles.bold} ${isActive ? styles.active : styles.none}`}
-    ></button>
+    />
   );
 }
-// Italic 아이콘 및 기능
+
 function Italic({ editor }: { editor: Editor }) {
   if (!editor) return null;
   const isActive = editor.isActive("italic");
-  // 클릭 시 실행할 내용
   const handleClick = () => {
     editor.chain().focus().toggleItalic().run();
   };
@@ -163,14 +54,13 @@ function Italic({ editor }: { editor: Editor }) {
       onClick={handleClick}
       disabled={!editor.can().chain().focus().toggleItalic().run()}
       className={`${styles.toolbarBtn} ${styles.italic} ${isActive ? styles.active : styles.none}`}
-    ></button>
+    />
   );
 }
-// Strikethrough 아이콘 및 기능
+
 function Strikethrough({ editor }: { editor: Editor }) {
   if (!editor) return null;
   const isActive = editor.isActive("strike");
-  // 클릭 시 실행할 내용
   const handleClick = () => {
     editor.chain().focus().toggleStrike().run();
   };
@@ -179,17 +69,14 @@ function Strikethrough({ editor }: { editor: Editor }) {
       onClick={handleClick}
       disabled={!editor.can().chain().focus().toggleStrike().run()}
       className={`${styles.toolbarBtn} ${styles.strike} ${isActive ? styles.active : styles.none}`}
-    ></button>
+    />
   );
 }
 
-// 내용 정렬 아이콘
 function Left({ editor }: { editor: Editor }) {
   if (!editor) return null;
   const isActive = editor.isActive({ textAlign: "left" });
-  // 클릭 시 실행할 내용
   const handleClick = () => {
-    // 비활성화 되는 이유는 현재 editor 에 정렬 플러그인이 셋팅 안되어서
     editor.chain().focus().setTextAlign("left").run();
   };
   return (
@@ -197,13 +84,12 @@ function Left({ editor }: { editor: Editor }) {
       onClick={handleClick}
       disabled={!editor.can().chain().focus().setTextAlign("left").run()}
       className={`${styles.toolbarBtn} ${styles.left} ${isActive ? styles.active : styles.none}`}
-    ></button>
+    />
   );
 }
 function Center({ editor }: { editor: Editor }) {
   if (!editor) return null;
   const isActive = editor.isActive({ textAlign: "center" });
-  // 클릭 시 실행할 내용
   const handleClick = () => {
     editor.chain().focus().setTextAlign("center").run();
   };
@@ -212,13 +98,12 @@ function Center({ editor }: { editor: Editor }) {
       onClick={handleClick}
       disabled={!editor.can().chain().focus().setTextAlign("center").run()}
       className={`${styles.toolbarBtn} ${styles.center} ${isActive ? styles.active : styles.none}`}
-    ></button>
+    />
   );
 }
 function Right({ editor }: { editor: Editor }) {
   if (!editor) return null;
   const isActive = editor.isActive({ textAlign: "right" });
-  // 클릭 시 실행할 내용
   const handleClick = () => {
     editor.chain().focus().setTextAlign("right").run();
   };
@@ -227,23 +112,22 @@ function Right({ editor }: { editor: Editor }) {
       onClick={handleClick}
       disabled={!editor.can().chain().focus().setTextAlign("right").run()}
       className={`${styles.toolbarBtn} ${styles.right} ${isActive ? styles.active : styles.none}`}
-    ></button>
+    />
   );
 }
 
-/** TextColor 아이콘 */
 function TextColor({ editor }: { editor: Editor }) {
   if (!editor) return null;
 
   const colors = [
-    "#000000", // 검정
-    "#FF0000", // 빨강
-    "#00FF00", // 초록
-    "#0000FF", // 파랑
-    "#FF00FF", // 마젠타
-    "#00FFFF", // 시안
-    "#FFFF00", // 노랑
-    "#808080", // 회색
+    "#000000",
+    "#FF0000",
+    "#00FF00",
+    "#0000FF",
+    "#FF00FF",
+    "#00FFFF",
+    "#FFFF00",
+    "#808080",
   ];
 
   return (
@@ -273,21 +157,20 @@ function TextColor({ editor }: { editor: Editor }) {
   );
 }
 
-/** BackgroundColor 아이콘 */
 function BackgroundColor({ editor }: { editor: Editor }) {
   if (!editor) return null;
 
   const colors = [
-    "#FFEB3B", // 노랑
-    "#FFA726", // 주황
-    "#EF5350", // 빨강
-    "#AB47BC", // 보라
-    "#7E57C2", // 남보라
-    "#42A5F5", // 파랑
-    "#26A69A", // 청록
-    "#66BB6A", // 초록
-    "#FFFFFF", // 흰색
-    "#E0E0E0", // 밝은 회색
+    "#FFEB3B",
+    "#FFA726",
+    "#EF5350",
+    "#AB47BC",
+    "#7E57C2",
+    "#42A5F5",
+    "#26A69A",
+    "#66BB6A",
+    "#FFFFFF",
+    "#E0E0E0",
   ];
 
   return (
@@ -317,7 +200,6 @@ function BackgroundColor({ editor }: { editor: Editor }) {
   );
 }
 
-/** Quote 아이콘 */
 function Quote({ editor }: { editor: Editor }) {
   if (!editor) return null;
 
@@ -328,15 +210,12 @@ function Quote({ editor }: { editor: Editor }) {
   return (
     <button
       onClick={handleClick}
-      disabled={!editor.can().chain().focus().toggleCode().run()}
-      className={`${styles.toolbarBtn} ${styles.quote} ${
-        isActive ? styles.active : styles.none
-      }`}
+      disabled={!editor.can().chain().focus().toggleBlockquote().run()}
+      className={`${styles.toolbarBtn} ${styles.quote} ${isActive ? styles.active : styles.none}`}
     />
   );
 }
 
-/** Code 아이콘 */
 function Code({ editor }: { editor: Editor }) {
   if (!editor) return null;
 
@@ -348,14 +227,11 @@ function Code({ editor }: { editor: Editor }) {
     <button
       onClick={handleClick}
       disabled={!editor.can().chain().focus().toggleCode().run()}
-      className={`${styles.toolbarBtn} ${styles.code} ${
-        isActive ? styles.active : styles.none
-      }`}
+      className={`${styles.toolbarBtn} ${styles.code} ${isActive ? styles.active : styles.none}`}
     />
   );
 }
 
-/** Link 아이콘 */
 function Link({ editor }: { editor: Editor }) {
   if (!editor) return null;
 
@@ -365,46 +241,34 @@ function Link({ editor }: { editor: Editor }) {
     const previousUrl = editor.getAttributes("link").href;
     const url = window.prompt("URL을 입력하세요:", previousUrl);
 
-    // 취소를 누르면 null이 반환됩니다
-    if (url === null) {
-      return;
-    }
-
-    // 빈 문자열이면 링크를 제거합니다
+    if (url === null) return;
     if (url === "") {
       editor.chain().focus().unsetLink().run();
       return;
     }
 
-    // 유효한 URL인지 확인
     try {
       new URL(url);
-    } catch (e) {
+    } catch {
       alert("유효한 URL을 입력해주세요.");
       return;
     }
 
-    // 링크 설정
     editor.chain().focus().setLink({ href: url }).run();
   };
 
   return (
     <button
       onClick={handleClick}
-      className={`${styles.toolbarBtn} ${styles.link} ${
-        isActive ? styles.active : styles.none
-      }`}
+      className={`${styles.toolbarBtn} ${styles.link} ${isActive ? styles.active : styles.none}`}
     />
   );
 }
 
-/** AddPhoto 아이콘 */
 function AddPhoto({ editor }: { editor: Editor }) {
   if (!editor) return null;
 
   const handleClick = () => {
-    // 여기에서 실제 이미지 업로드 로직 or URL 입력 등 처리 가능
-    // 임시로 샘플 이미지 삽입
     editor.chain().focus().setImage({ src: "https://i.pravatar.cc" }).run();
   };
 
@@ -416,7 +280,6 @@ function AddPhoto({ editor }: { editor: Editor }) {
   );
 }
 
-// Icon 객체로 모아서 export
 export const Icon = {
   H1,
   H2,
