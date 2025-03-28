@@ -90,8 +90,15 @@ function SideNavigation() {
           <Search className="w-4 h-4" />
         </Button>
       </div>
-      {/* page 추가 버튼 */}
       <div className={styles.container_buttonBox}>
+        <Button
+          variant={"outline"}
+          className="w-full text-gray-500 border-slate-600 hover:bg-slate-200 hover:text-gray-500"
+          onClick={() => router.push("/blog")}
+        >
+          Move to Blog
+        </Button>
+        {/* page 추가 버튼 */}
         <Button
           variant={"outline"}
           className="w-full text-orange-500 border-orange-400 hover:bg-orange-50 hover:text-orange-500"

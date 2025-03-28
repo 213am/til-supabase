@@ -18,6 +18,8 @@
   //   페이지 추가 버튼
   &_buttonBox {
     display: flex;
+    flex-direction: column;
+    gap: 10px;
     align-items: center;
     justify-content: center;
     width: 100%;
