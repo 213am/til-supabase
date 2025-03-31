@@ -1,4 +1,4 @@
-import { BoardContents } from "@/app/create/[id]/page";
+import { BoardContents } from "@/app/(with-side)/create/[id]/page";
 import styles from "@/components/common/board/BasicBoard.module.scss";
 import MarkdownDialog from "@/components/common/dialog/MarkdownDialog";
 import { Button } from "@/components/ui/button";

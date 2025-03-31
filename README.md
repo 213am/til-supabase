@@ -1,464 +1,461 @@
-# blog 목록 출력 - Read
+# auth
 
-- blog 접속시 목록 출력
-- 목록 선택시 blog/[id] 로 이동
-- 상세내용에서 삭제/수정 버튼 출력
+- `/src/middleware.ts`
+  - 약속된 파일명
 
-## 폴더구조
+## UI 환경설정
 
-- Create : `/src/app/create/page.tsx`
+```bash
+npm i react-hook-form --legacy-peer-deps
+npm i zod --legacy-peer-deps
+npm i @hookform/resolvers --legacy-peer-deps
+```
 
-  - http://localhost:3000/blog/create
+```bash
+npx shadcn@latest add card
+npx shadcn@latest add form
+```
 
-- Read : `/src/app/blog/[id]/page.tsx`
+- auth 관련 사항은 UI 참조
 
-  - http://localhost:3000/blog/[id]
+## 로그인 기능 설정하기
 
-- Edit : `/src/app/edit/[id]/page.tsx`
+- `/src/lib/supabase/actions.ts` 파일 생성
 
-  - http://localhost:3000/blog/edit/[id]
+```ts
+"use server";
 
-- List : `/src/app/blog/page.tsx`
+import { Provider } from "@supabase/supabase-js";
+import { createServerSideClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
-  - http://localhost:3000/blog
+const signInWith = (provider: Provider) => async () => {
+  const supabase = await createServerSideClient();
 
-<br/>
+  const auth_callback_url = `${process.env.SITE_URL}/auth/callback`;
 
-## List 목록 Page
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: {
+      redirectTo: auth_callback_url,
+    },
+  });
 
-- `src/app/blog/page.tsx`
+  console.log(data);
+
+  if (error) {
+    console.log(error);
+  }
+
+  redirect(data.url as string);
+};
+
+const signInWithGoogle = signInWith("google");
+
+export { signInWithGoogle };
+```
+
+- `/src/components/auth/loginform.tsx` 파일 수정
 
 ```tsx
 "use client";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { BlogRow, getBlogs } from "@/app/actions/blog-actions";
 
-function Page() {
-  const [blogs, setBlogs] = useState<BlogRow[] | null>([]);
+import { signInWithGoogle } from "@/lib/supabase/actions";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { toast } from "sonner";
 
-  const getBlogList = async () => {
-    const { data, error, status } = await getBlogs();
-    console.log("블로그 목록 : ", data);
-    if (data) {
-      setBlogs(data);
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+
+const formSchema = z.object({
+  email: z.string().email({
+    message: "유효한 이메일을 입력해주세요.",
+  }),
+  password: z.string().min(6, {
+    message: "비밀번호는 최소 6자 이상이어야 합니다.",
+  }),
+});
+
+export function LoginForm() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      setIsLoading(true);
+
+      toast.success("로그인 성공!", {
+        description: "메인 페이지로 이동합니다.",
+      });
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch (error) {
+      toast.error("로그인 실패", {
+        description: "이메일과 비밀번호를 확인해주세요.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  const handleGoogleLogin = async () => {
+    try {
+      setIsLoading(true);
+      await signInWithGoogle();
+      toast.success("로그인 성공!", {
+        description: "메인 페이지로 이동합니다.",
+      });
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch (error) {
+      toast.error("로그인 실패", {
+        description: "Google 로그인 중 오류가 발생했습니다.",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  return (
+    <Card className="w-[350px]">
+      <CardHeader>
+        <CardTitle>로그인</CardTitle>
+        <CardDescription>
+          계정에 로그인하여 서비스를 이용하세요.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>이메일</FormLabel>
+                  <FormControl>
+                    <Input placeholder="name@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>비밀번호</FormLabel>
+                  <FormControl>
+                    <Input type="password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                  <Button
+                    variant="link"
+                    className="px-0 text-xs text-muted-foreground"
+                    onClick={() => router.push("/auth/reset-password")}
+                  >
+                    비밀번호를 잊으셨나요?
+                  </Button>
+                </FormItem>
+              )}
+            />
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "로그인 중..." : "로그인"}
+            </Button>
+          </form>
+        </Form>
+      </CardContent>
+      <CardFooter className="flex flex-col gap-4">
+        <div className="relative w-full">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">
+              Or continue with
+            </span>
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          type="button"
+          className="w-full"
+          onClick={handleGoogleLogin}
+          disabled={isLoading}
+        >
+          Google로 계속하기
+        </Button>
+        <div className="text-center text-sm text-muted-foreground">
+          계정이 없으신가요?{" "}
+          <Button
+            variant="link"
+            className="p-0 text-primary"
+            onClick={() => router.push("/auth/signup")}
+          >
+            회원가입
+          </Button>
+        </div>
+      </CardFooter>
+    </Card>
+  );
+}
+```
+
+## callback 만들기
+
+- `/app/auth/callback` 폴더 생성
+- `/app/auth/callback/route.ts` 파일 생성
+
+```ts
+import { NextRequest, NextResponse } from "next/server";
+import { createServerSideClient } from "@/lib/supabase/server";
+
+export async function GET(request: NextRequest) {
+  const { searchParams, origin } = new URL(request.url);
+  const code = searchParams.get("code");
+  const next = searchParams.get("next") ?? "/";
+
+  console.log("code", code);
+  console.log("next", next);
+  if (code) {
+    const supabase = await createServerSideClient();
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) {
+      const forwardedHost = request.headers.get("x-forwarded-host");
+      const isLocalEnv = process.env.NODE_ENV === "development";
+      if (isLocalEnv) {
+        return NextResponse.redirect(`${origin}${next}`);
+      } else if (forwardedHost) {
+        return NextResponse.redirect(`https://${forwardedHost}${next}`);
+      } else {
+        return NextResponse.redirect(`${origin}${next}`);
+      }
+    }
+  }
+
+  return NextResponse.redirect(`${origin}/auth/auth-code-error`);
+}
+```
+
+## 로그아웃 구현하기
+
+- /src/lib/supabase/actions.ts 추가
+
+```ts
+"use server";
+
+import { Provider } from "@supabase/supabase-js";
+import { createServerSideClient } from "./server";
+import { redirect } from "next/navigation";
+
+const signInWith = (provider: Provider) => async () => {
+  const supabase = await createServerSideClient();
+
+  const auth_callback_url = `${process.env.SITE_URL}/auth/callback`;
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: {
+      redirectTo: auth_callback_url,
+    },
+  });
+
+  console.log(data);
+
+  if (error) {
+    console.log(error);
+  }
+
+  redirect(data.url as string);
+};
+
+const signInWithGoogle = signInWith("google");
+
+const signOut = async () => {
+  const supabase = await createServerSideClient();
+  await supabase.auth.signOut();
+};
+
+export { signInWithGoogle, signOut };
+```
+
+- SideNavigation.tsx
+
+```tsx
+"use client";
+import { createTodo, getTodos, TodoRow } from "@/app/actions/todos-actions";
+import { useAtom } from "jotai";
+import { sidebarStateAtom } from "@/app/store";
+import styles from "@/components/common/navigation/SideNavigation.module.scss";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dot, Search } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { signOut } from "@/lib/supabase/actions";
+
+function SideNavigation() {
+  const router = useRouter();
+  const [todos, setTodos] = useState<TodoRow[] | null>([]);
+  // jotai 상태 사용하기
+  const [sidebarState, setSidebarState] = useAtom(sidebarStateAtom);
+
+  // Create
+  const onCreate = async () => {
+    const { data, error, status } = await createTodo({
+      title: "",
+      contents: JSON.stringify([]),
+      start_date: new Date().toISOString(),
+      end_date: new Date().toISOString(),
+    });
+
+    if (error) {
+      toast.error("데이터 추가 실패", {
+        description: `데이터를 추가하는데 실패하였습니다. ${error.message}`,
+        duration: 3000,
+      });
+    }
+    toast.success("데이터 추가 성공!", {
+      description: `새로운 할일이 등록 되었습니다.`,
+      duration: 3000,
+    });
+
+    // 데이터 추가 성공시 할일 등록창으로 이동시킴
+    // http://localhost:3000/create/[data.id] 로 이동
+    router.push(`/create/${data?.id}`);
+    setSidebarState("newPage");
+  };
+
+  // Read
+  const fetchGetTodos = async () => {
+    const { data, error, status } = await getTodos();
+    console.log("할일 목록 가져오기 : ", data);
+    // 에러 발생 시 처리
+    if (error) {
+      toast.error("데이터 조회 실패", {
+        description: `데이터를 가져오는데 실패하였습니다. ${error.message}`,
+        duration: 3000,
+      });
+      return;
+    }
+    // 데이터 조회 성공 시 처리
+    toast.success("데이터 조회 성공!", {
+      description: `할일 목록을 확인해보세요.`,
+      duration: 3000,
+    });
+
+    setTodos(data);
+  };
+
   useEffect(() => {
-    getBlogList();
-  }, []);
+    fetchGetTodos();
+  }, []); // ← 초기 마운트에도 실행
+
+  useEffect(() => {
+    if (sidebarState !== "default") {
+      fetchGetTodos();
+
+      if (sidebarState === "Page Delete") {
+        router.push("/");
+      }
+    }
+  }, [sidebarState]);
 
   return (
-    <div className="flex w-[920px] h-dvh bg-[#f9f9f9] border-r border-[#d6d6d6] items-start justify-center">
-      <div className="w-full">
-        <div>
-          {blogs?.map((item) => (
-            <div key={item.id}>
-              <Link href={`/blog/${item.id}`}>{item.title}</Link>
+    <div className={styles.container}>
+      {/* 검색창 */}
+      <div className={styles.container_searchBox}>
+        <Input
+          type="text"
+          placeholder="검색어를 입력하세요."
+          className="focus-visible:right"
+        />
+        <Button variant={"outline"} size={"icon"}>
+          <Search className="w-4 h-4" />
+        </Button>
+      </div>
+      <div className={styles.container_buttonBox}>
+        <Button
+          variant={"outline"}
+          className="w-full text-gray-500 border-slate-600 hover:bg-slate-200 hover:text-gray-500"
+          onClick={() => router.push("/blog")}
+        >
+          Move to Blog
+        </Button>
+        {/* page 추가 버튼 */}
+        <Button
+          variant={"outline"}
+          className="w-full text-orange-500 border-orange-400 hover:bg-orange-50 hover:text-orange-500"
+          onClick={onCreate}
+        >
+          Add New Page
+        </Button>
+      </div>
+      {/* 추가 항목 출력 영역 */}
+      <div className={styles.container_todos}>
+        <div className={styles.container_todos_label}>
+          {/* 로그아웃 버튼 배치 */}
+          {"홍길동"}님의 할일 목록
+        </div>
+        <div className={styles.container_todos_list}>
+          {todos?.map((item) => (
+            <div
+              key={item.id}
+              className="flex items-center py-2 bg-[#f5f5f4] rounded-sm cursor-pointer"
+              onClick={() => router.push(`/create/${item.id}`)}
+            >
+              <Dot className="mr-1 text-green-400" />
+              <span className="text-sm">
+                {item.title ? item.title : "No title"}
+              </span>
             </div>
           ))}
         </div>
-        <Link href="/blog/create"> 생성</Link>
+        <div>
+          <button
+            className="border rounded px-2.5 py-2"
+            type="submit"
+            onClick={signOut}
+          >
+            Sign Out
+          </button>
+        </div>
       </div>
     </div>
   );
 }
-export default Page;
-```
 
-<br/>
-
-## Read Page
-
-- `src/app/blog/[id]/page.tsx`
-
-```tsx
-"use client";
-import { deleteBlog, getBlogId } from "@/app/actions/blog-actions";
-import { Button } from "@/components/ui/button";
-import { useParams, useRouter } from "next/navigation";
-
-import { useEffect, useState } from "react";
-
-const Page = () => {
-  const { id } = useParams();
-  const [title, setTitle] = useState<string>("");
-  const [content, setContent] = useState<string | null>("");
-  const [date, setDate] = useState<string>("");
-  const router = useRouter();
-
-  const getBlogOne = async () => {
-    const { data, error, status } = await getBlogId(Number(id));
-    console.log(data);
-    if (data) {
-      setTitle(data.title);
-      setContent(data.content);
-      setDate(data.created_at);
-    }
-  };
-
-  // 내용 삭제 : 이미지도 같이 삭제
-  const deleteContent = async () => {
-    console.log("이미지 삭제 처리 필요");
-    const { error, status } = await deleteBlog(Number(id));
-    if (!error) {
-      router.push("/blog");
-    }
-  };
-
-  useEffect(() => {
-    getBlogOne();
-  }, []);
-
-  return (
-    <div className="flex w-[920px] h-dvh bg-[#f9f9f9] border-r border-[#d6d6d6] items-start justify-center">
-      <div className="flex flex-col w-full p-5 bg-white">
-        <h1 className="w-full text-center text-xl mb-4 font-semibold">
-          Blog Detail Page
-        </h1>
-        <div className="flex flex-col spa-y-4 mb-5">
-          <div className="text-lg font-semibold">{title}</div>
-          <div className="text-gray-600 text-sm mb-4">{date.split("T")[0]}</div>
-          <div
-            className="editor ProseMirror"
-            dangerouslySetInnerHTML={{ __html: content || "" }}
-          ></div>
-        </div>
-        <div className="flex w-full justify-end gap-4">
-          <Button
-            className="px-4 py-2 bg-blue-400 text-white rounded cursor-pointer hover:bg-blue-600 transition-colors"
-            onClick={() => router.push(`/blog/edit/${id}`)}
-          >
-            수정
-          </Button>
-          <Button
-            className="px-4 py-2 bg-gray-400 text-white rounded cursor-pointer hover:bg-gray-600 transition-colors"
-            onClick={() => deleteContent()}
-          >
-            삭제
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-};
-export default Page;
-```
-
-## Edit Page
-
-- `src/app/blog/edit/[id]/page.tsx`
-
-```tsx
-"use client";
-import { BlogRow, getBlogId } from "@/app/actions/blog-actions";
-import EditEditor from "@/components/editor/edit-editor";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-
-const Page = () => {
-  const { id } = useParams();
-  const [blogData, setBlogData] = useState<BlogRow | null>(null);
-
-  const getBlogOne = async (_id: string) => {
-    const { data, error, status } = await getBlogId(Number(_id));
-    if (data) {
-      setBlogData(data);
-    }
-  };
-
-  useEffect(() => {
-    getBlogOne(id as string);
-  }, []);
-
-  return (
-    <div className="flex w-[920px] h-dvh bg-[#f9f9f9] border-r border-[#d6d6d6] items-start justify-center">
-      <EditEditor blogData={blogData} />
-    </div>
-  );
-};
-export default Page;
-```
-
-- `src/components/editor/edit-editor.tsx`
-
-```tsx
-"use client";
-import { BlogRow, updateBlog } from "@/app/actions/blog-actions";
-import { useEffect, useRef, useState } from "react";
-import styles from "@/components/editor/editor.module.css";
-import Toolbar from "@/components/editor/Toolbar";
-import { EditorContent, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import TextAlign from "@tiptap/extension-text-align";
-import Color from "@tiptap/extension-color";
-import TextStyle from "@tiptap/extension-text-style";
-import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
-import Link from "@tiptap/extension-link";
-import Highlight from "@tiptap/extension-highlight";
-import { common, createLowlight } from "lowlight";
-import Image from "@tiptap/extension-image";
-import { Button } from "@/components/ui/button";
-import { deleteFile, uploadFile } from "@/app/actions/blog-storage-actions";
-import { useRouter } from "next/navigation";
-import { getImageUrl } from "@/utils/storage-utils";
-
-const EditEditor = ({ blogData }: { blogData: BlogRow }) => {
-  const { id, title, content, created_at } = blogData;
-  const [tempTitle, setTempTitle] = useState<string>(title ? title : "");
-  const [tempContent, setTempContent] = useState<string>(
-    content ? content : ""
-  );
-  const router = useRouter();
-  // html 태그 참조
-  const titleInputRef = useRef<HTMLInputElement>(null);
-
-  // 서버에 저장된 이미지 관리하는 법
-
-  // 1. 삭제 예정 이미지 URL 을 저장하는 배열
-  const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
-
-  // 2. 새로 업로드 되는 이미지 URL 을 저정하는 배열
-  const [newUploadImages, setNewUploadImages] = useState<string[]>([]);
-
-  // 3. 기존 내용에 포함된 이미지 URL 을 추출
-  const handleImageDelete = async (imageUrl: string) => {
-    console.log("handleImageDelete : ", imageUrl);
-    if (newUploadImages.includes(imageUrl)) {
-      // 새로 업로드된 이미지인 경우
-      setNewUploadImages((prev) => prev.filter((url) => url !== imageUrl));
-
-      // 서버에서도 즉시 삭제
-      const fileNameMatch = imageUrl.match(/([^\/]+)$/);
-      if (fileNameMatch) {
-        const fileName = fileNameMatch[1];
-        await deleteFile(fileName);
-      }
-    } else {
-      // 기존 이미지인 경우 삭제 예정 목록에 추가
-      setImagesToDelete((prev) => [...prev, imageUrl]);
-    }
-  };
-
-  useEffect(() => {
-    console.log("삭제 예정 이미지 목록 : ", imagesToDelete);
-  }, [imagesToDelete]);
-  useEffect(() => {
-    console.log("신규 업로드 이미지 목록 : ", newUploadImages);
-  }, [newUploadImages]);
-
-  // Tiptap 에디터 생성
-  // 배경색
-  const lowlight = createLowlight(common);
-  const CustomHighlight = Highlight.configure({
-    multicolor: true,
-  });
-
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      TextAlign.configure({
-        types: ["heading", "paragraph", "blockquote"],
-        alignments: ["left", "center", "right"],
-      }),
-      Color,
-      TextStyle,
-      CodeBlockLowlight.configure({
-        lowlight: lowlight,
-      }),
-      CustomHighlight,
-      Link.configure({
-        openOnClick: true,
-        HTMLAttributes: {
-          class: "cursor-pointer text-blue-500 hover:underline",
-        },
-      }),
-      Image,
-    ],
-    content: tempContent,
-    editorProps: {
-      handleKeyDown: (view, event) => {
-        if (event.key === "Delete" || event.key === "Backspace") {
-          const { from, to } = view.state.selection;
-
-          // 선택 영역이 있는 경우 (드래그 선택 또는 Ctrl+A)
-          if (from !== to) {
-            view.state.doc.nodesBetween(from, to, (node) => {
-              if (node.type.name === "image") {
-                const imageUrl = node.attrs.src;
-                if (imageUrl.includes("supabase")) {
-                  console.log("선택 영역 내 이미지 삭제:", imageUrl);
-                  // 새 게시글 등록시 사용했던 함수
-                  // deleteImageFromSupabase(imageUrl);
-                  // 현재는 바로 서버에 반영하지 않고 임시로 저장
-                  handleImageDelete(imageUrl);
-                }
-              }
-              return true; // 계속 순회
-            });
-          } else {
-            // 단일 위치에서의 삭제
-            const pos = event.key === "Delete" ? from : from - 1;
-            const node = view.state.doc.nodeAt(pos);
-
-            if (node?.type.name === "image") {
-              const imageUrl = node.attrs.src;
-              if (imageUrl.includes("supabase")) {
-                console.log("단일 이미지 삭제:", imageUrl);
-                // deleteImageFromSupabase(imageUrl);
-                handleImageDelete(imageUrl);
-              }
-            }
-          }
-        }
-        return false; // 기본 키보드 동작 허용
-      },
-    },
-  });
-
-  // 사용자가 새로운 이미지를 추가할 때 실행되는 함수
-  const handleImageUpload = async (file: File) => {
-    console.log("이미지 업로드 시 :", file);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      // uploadFile에 FormData 전달
-      const result = await uploadFile(formData);
-
-      // 이미지 URL 생성
-      const imageUrl = getImageUrl(result?.path ?? "");
-
-      // 새로 업로드된 이미지 URL 추적
-      setNewUploadImages((prev) => [...prev, imageUrl]);
-
-      return imageUrl;
-    } catch (error) {
-      console.error("Image upload error:", error);
-      return null;
-    }
-  };
-
-  // Supabase 에서 이미지 삭제하는 함수
-  const deleteImageFromSupabase = async (imageUrl: string) => {
-    console.log("삭제될 이미지 파일명 추출 : ", imageUrl);
-    try {
-      // URL에서 파일명만 추출
-      const fileNameMatch = imageUrl.match(/([^\/]+)$/);
-      if (fileNameMatch) {
-        const fileName = fileNameMatch[1]; // "slide-3.png"
-        console.log("Deleting image from Supabase:", fileName);
-        await deleteFile(fileName); // await로 삭제 완료 대기
-      }
-    } catch (error) {
-      console.error("Error deleting image from Supabase:", error);
-    }
-  };
-
-  // 업데이트
-  const handleUpdate = () => {
-    if (!tempTitle.trim()) {
-      alert("제목을 입력해주세요");
-      // 태그에 포커스 이동시켜주기
-      titleInputRef.current?.focus();
-      return;
-    }
-
-    // getHTML 메서드 이용한 내용 파악
-    const html = editor?.getHTML();
-    // 내용이 비어있는지 확인
-    const isEmpty = editor?.isEmpty;
-    if (isEmpty || !html?.trim()) {
-      alert("내용을 입력해주세요");
-      editor?.commands.focus();
-      return;
-    }
-
-    // 업데이트 진행
-    fetchUpdateBlog();
-    router.push("/blog");
-  };
-
-  const fetchUpdateBlog = async () => {
-    // 1. 업데이트 하기 전에 삭제 이미지들은 삭제 처리부터
-    // 반복문으로 삭제 실행
-    for (const imageUrl in imagesToDelete) {
-      const fileNameMatch = imageUrl.match(/([^\/]+)$/);
-      if (fileNameMatch) {
-        const fileName = fileNameMatch[1];
-        await deleteFile(fileName);
-      }
-    }
-    // 2. blog 내용 업데이트
-    const html = editor?.getHTML();
-    const { data, error, status } = await updateBlog(
-      id,
-      tempTitle,
-      html as string
-    );
-    if (error) {
-      alert(error.message);
-    }
-  };
-
-  // 취소
-  const handleCancle = async () => {
-    // 현재 에디터 내용에서 모든 이미지 찾기
-    if (editor) {
-      const deletePromises: Promise<void>[] = [];
-
-      editor.state.doc.descendants((node) => {
-        if (node.type.name === "image") {
-          const imageUrl = node.attrs.src;
-          if (imageUrl.includes("supabase")) {
-            console.log("작성 취소로 인한 이미지 삭제:", imageUrl);
-            deletePromises.push(deleteImageFromSupabase(imageUrl));
-          }
-        }
-        return true; // 계속 순회
-      });
-
-      // 모든 이미지 삭제 완료 대기
-      if (deletePromises.length > 0) {
-        await Promise.all(deletePromises);
-        console.log(`총 ${deletePromises.length}개의 이미지 삭제 완료`);
-      }
-    }
-    router.push("/blog");
-  };
-
-  return (
-    <div className="w-full p-10">
-      <div>
-        <input
-          ref={titleInputRef}
-          type="text"
-          value={tempTitle ? tempTitle : ""}
-          onChange={(e) => setTempTitle(e.target.value)}
-          placeholder="제목을 입력하세요"
-          className="flex w-full"
-        />
-      </div>
-      <div className={styles.editor}>
-        {editor && (
-          <Toolbar editor={editor} onImageUpload={handleImageUpload} />
-        )}
-        <EditorContent
-          editor={editor}
-          onClick={() => editor?.commands.focus()}
-        />
-      </div>
-      <div>
-        <Button variant={"ghost"} type="button" onClick={handleUpdate}>
-          수정
-        </Button>
-        <Button variant={"ghost"} type="button" onClick={handleCancle}>
-          취소
-        </Button>
-      </div>
-    </div>
-  );
-};
-export default EditEditor;
+export default SideNavigation;
 ```

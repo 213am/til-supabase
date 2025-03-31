@@ -1,12 +1,12 @@
 "use client";
-import styles from "@/app/page.module.scss";
+import styles from "@/app/(with-side)/page.module.scss";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { createTodo, getTodos } from "./actions/todos-actions";
+import { createTodo, getTodos } from "@/app/actions/todos-actions";
 import { toast } from "sonner";
 import { useEffect } from "react";
 import { useAtom } from "jotai";
-import { sidebarStateAtom } from "./store";
+import { sidebarStateAtom } from "@/app/store/index";
 
 function Home() {
   const router = useRouter();

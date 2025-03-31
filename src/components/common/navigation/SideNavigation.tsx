@@ -9,6 +9,7 @@ import { Dot, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { signOut } from "@/lib/supabase/actions";
 
 function SideNavigation() {
   const router = useRouter();
@@ -109,6 +110,15 @@ function SideNavigation() {
       </div>
       {/* 추가 항목 출력 영역 */}
       <div className={styles.container_todos}>
+        <div className="flex w-full justify-center">
+          <button
+            className="border rounded px-2.5 py-2"
+            type="submit"
+            onClick={signOut}
+          >
+            Sign Out
+          </button>
+        </div>
         <div className={styles.container_todos_label}>
           {/* 로그아웃 버튼 배치 */}
           {"홍길동"}님의 할일 목록

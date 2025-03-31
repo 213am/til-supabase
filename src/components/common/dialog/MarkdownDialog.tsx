@@ -8,7 +8,7 @@ import styles from "@/components/common/dialog/MarkdownDialog.module.scss";
 // Markdown
 import MDEditor from "@uiw/react-md-editor";
 // shadcn/ui
-import { BoardContents } from "@/app/create/[id]/page";
+import { BoardContents } from "@/app/(with-side)/create/[id]/page";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
