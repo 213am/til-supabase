@@ -143,7 +143,7 @@ const CreateEditor = () => {
 
     setTitle("");
     setContent("");
-    router.push("/");
+    router.push("/blog");
   };
 
   return (
