@@ -17,14 +17,17 @@ import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
 import { Button } from "@/components/ui/button";
 import { createBlog } from "@/app/actions/blog-actions";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { deleteFile } from "@/app/actions/blog-storage-actions";
 
 const CreateEditor = () => {
   // 제목과 내용 state
   const [title, setTitle] = useState<string>("");
   const [content, setContent] = useState<string>("");
+  // 🔁 이전 이미지 URL 목록 저장용 Ref (렌더링과 무관하게 상태 유지)
+  const prevImageUrlsRef = useRef<string[]>([]);
   const router = useRouter();
   // 배경색
   const lowlight = createLowlight(common);
@@ -54,12 +57,72 @@ const CreateEditor = () => {
       Image,
     ],
     content: content, // 초기값
-    // 내용이 갱신 시 실행
     onUpdate({ editor }) {
-      // 내용 읽기
-      setContent(editor.getHTML());
+      const html = editor.getHTML();
+      setContent(html);
+
+      // 현재 에디터에서 이미지 src 추출
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = html;
+      const imgTags = Array.from(tempDiv.getElementsByTagName("img"));
+      const currentImageUrls = imgTags.map((img) => img.src);
+
+      // 삭제된 이미지 URL만 필터링
+      const deletedImages = prevImageUrlsRef.current.filter(
+        (url) => !currentImageUrls.includes(url)
+      );
+
+      // Supabase에서 삭제
+      deletedImages.forEach((url) => {
+        if (url.includes("supabase")) {
+          deleteImageFromSupabase(url);
+        }
+      });
+
+      // 현재 이미지 목록을 Ref에 저장
+      prevImageUrlsRef.current = currentImageUrls;
+    },
+    editorProps: {
+      handleKeyDown: (view, event) => {
+        // blockquote empty 처리만 유지
+        if (event.key === "Backspace") {
+          const { selection } = view.state;
+          const { empty, $anchor } = selection;
+          const isBlockquote = $anchor.parent.type.name === "blockquote";
+
+          if (empty && isBlockquote && $anchor.parent.content.size === 0) {
+            editor?.commands.clearNodes();
+            return true;
+          }
+        }
+        return false;
+      },
     },
   });
+
+  const deleteImageFromSupabase = async (imageUrl: string) => {
+    try {
+      const bucket = process.env.NEXT_PUBLIC_STORAGE_BLOG_BUCKET as string;
+      const prefix = `/storage/v1/object/public/${bucket}/`;
+
+      const url = new URL(imageUrl);
+      const pathname = decodeURIComponent(url.pathname);
+
+      // 이미지 경로 추출
+      const pathIndex = pathname.indexOf(prefix);
+      if (pathIndex === -1) {
+        console.warn("Supabase image URL 형식이 아닙니다:", imageUrl);
+        return;
+      }
+
+      const filePath = pathname.slice(pathIndex + prefix.length);
+      console.log("Supabase에서 삭제될 경로:", filePath);
+
+      await deleteFile(filePath);
+    } catch (error) {
+      console.error("Error deleting image from Supabase:", error);
+    }
+  };
 
   const onSubmit = async () => {
     if (!title || !content) {
@@ -108,7 +171,10 @@ const CreateEditor = () => {
           }}
         >
           {editor && <Toolbar editor={editor} />}
-          <EditorContent editor={editor} />
+          <EditorContent
+            editor={editor}
+            onClick={() => editor?.commands.focus()}
+          />
         </div>
         <div className="flex w-full items-center justify-center p-2">
           <Button type="button" className="px-4 py-2" onClick={onSubmit}>
