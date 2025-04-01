@@ -112,7 +112,7 @@ function SideNavigation() {
       <div className={styles.container_todos}>
         <div className="flex w-full justify-center">
           <button
-            className="border rounded px-2.5 py-2"
+            className="border rounded px-5 py-2 bg-white text-gray-800 cursor-pointer hover:bg-gray-600 hover:text-white"
             type="submit"
             onClick={signOut}
           >
