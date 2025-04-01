@@ -1,7 +1,7 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
 // scss
-import styles from "@/app/create/[id]/page.module.scss";
+import styles from "@/app/(with-side)/create/[id]/page.module.css";
 // action
 import {
   deleteTodo,

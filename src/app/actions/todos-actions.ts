@@ -14,12 +14,23 @@ function handleError(error: unknown): never {
   throw new Error("An unknown error occurred");
 }
 
-export async function createTodo(todo: TodoRowInsert): Promise<{
-  data: TodoRow[] | null;
-  error: Error | null;
-  status: number;
-}> {
+// Create 기능
+export async function createTodo(todo: TodoRowInsert) {
   const supabase = await createServerSideClient();
+
+  // 현재 로그인한 사용자 정보 가져오기
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return {
+      data: null,
+      error: userError || new Error("User not authenticated"),
+      status: 401,
+    };
+  }
 
   const { data, error, status } = await supabase
     .from("todos")
@@ -29,20 +40,36 @@ export async function createTodo(todo: TodoRowInsert): Promise<{
         contents: todo.contents,
         start_date: todo.start_date,
         end_date: todo.end_date,
+        user_id: user.id,
+        user_email: user.email,
       },
     ])
     .select()
     .single();
-  console.log(status);
 
   return { data, error, status };
 }
 
 export async function getTodos() {
   const supabase = await createServerSideClient();
+  // 현재 로그인한 사용자 정보 가져오기
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return {
+      data: null,
+      error: userError || new Error("User not authenticated"),
+      status: 401,
+    };
+  }
+
   const { data, error, status } = await supabase
     .from("todos")
     .select("*")
+    .eq("user_id", user.id)
     .order("id", { ascending: false });
   return { data, error, status } as {
     data: TodoRow[] | null;
@@ -54,9 +81,25 @@ export async function getTodos() {
 // Read 기능 id 한개 가져오기
 export async function getTodoId(id: number) {
   const supabase = await createServerSideClient();
+
+  // 현재 로그인한 사용자 정보 가져오기
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return {
+      data: null,
+      error: userError || new Error("User not authenticated"),
+      status: 401,
+    };
+  }
+
   const { data, error, status } = await supabase
     .from("todos")
     .select()
+    .eq("user_id", user.id) // 로그인 사용자 정보
     .eq("id", id)
     .single();
   return { data, error, status } as {
@@ -69,9 +112,25 @@ export async function getTodoId(id: number) {
 // 업데이트 기능
 export async function updateTodo(id: number, contents: string) {
   const supabase = await createServerSideClient();
+
+  // 현재 로그인한 사용자 정보 가져오기
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return {
+      data: null,
+      error: userError || new Error("User not authenticated"),
+      status: 401,
+    };
+  }
+
   const { data, error, status } = await supabase
     .from("todos")
     .update({ contents: contents })
+    .eq("user_id", user.id) // 로그인 사용자 정보
     .eq("id", id)
     .select()
     .single();
@@ -91,6 +150,21 @@ export async function updateTodoTitle(
   endDate: Date | string
 ) {
   const supabase = await createServerSideClient();
+
+  // 현재 로그인한 사용자 정보 가져오기
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return {
+      data: null,
+      error: userError || new Error("User not authenticated"),
+      status: 401,
+    };
+  }
+
   const { data, error, status } = await supabase
     .from("todos")
     .update({
@@ -98,6 +172,7 @@ export async function updateTodoTitle(
       start_date: new Date(startDate).toISOString(),
       end_date: new Date(endDate).toISOString(),
     })
+    .eq("user_id", user.id) // 로그인 사용자 정보
     .eq("id", id)
     .select()
     .single();
@@ -112,7 +187,26 @@ export async function updateTodoTitle(
 // Page 삭제 함수
 export async function deleteTodo(id: number) {
   const supabase = await createServerSideClient();
-  const { error, status } = await supabase.from("todos").delete().eq("id", id);
+
+  // 현재 로그인한 사용자 정보 가져오기
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return {
+      data: null,
+      error: userError || new Error("User not authenticated"),
+      status: 401,
+    };
+  }
+
+  const { error, status } = await supabase
+    .from("todos")
+    .delete()
+    .eq("user_id", user.id) // 로그인 사용자 정보
+    .eq("id", id);
 
   return { error, status } as {
     error: Error | null;
