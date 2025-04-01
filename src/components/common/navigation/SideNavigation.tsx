@@ -2,7 +2,7 @@
 import { createTodo, getTodos, TodoRow } from "@/app/actions/todos-actions";
 import { useAtom } from "jotai";
 import { sidebarStateAtom } from "@/app/store";
-import styles from "@/components/common/navigation/SideNavigation.module.scss";
+import styles from "@/components/common/navigation/SideNavigation.module.css";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dot, Search } from "lucide-react";
@@ -10,13 +10,27 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { signOut } from "@/lib/supabase/actions";
+// zustand
+import { useUserStore } from "@/app/store/useUserStore";
 
-function SideNavigation() {
+function SideNavigation({ user }: { user: any }) {
+  console.log("props 로 받은 데이터 : ", user);
+  const { name, email, setUser } = useUserStore();
+
   const router = useRouter();
   const [todos, setTodos] = useState<TodoRow[] | null>([]);
   // jotai 상태 사용하기
   const [sidebarState, setSidebarState] = useAtom(sidebarStateAtom);
 
+  useEffect(() => {
+    if (user) {
+      setUser(
+        user.user_metadata.user_name,
+        user.email ? user.email : "",
+        user.id
+      );
+    }
+  }, []);
   // Create
   const onCreate = async () => {
     const { data, error, status } = await createTodo({
@@ -121,7 +135,7 @@ function SideNavigation() {
         </div>
         <div className={styles.container_todos_label}>
           {/* 로그아웃 버튼 배치 */}
-          {"홍길동"}님의 할일 목록
+          {name}님의 할일 목록 {email}
         </div>
         <div className={styles.container_todos_list}>
           {todos?.map((item) => (
