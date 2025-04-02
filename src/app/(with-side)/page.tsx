@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { useEffect } from "react";
 import { useAtom } from "jotai";
 import { sidebarStateAtom } from "@/app/store/index";
+// React Query
+import { useMutation } from "@tanstack/react-query";
 
 function Home() {
   const router = useRouter();
@@ -14,29 +16,30 @@ function Home() {
   const [sidebarState, setSidebarState] = useAtom(sidebarStateAtom);
 
   // Create
-  const onCreate = async () => {
-    const { data, error, status } = await createTodo({
-      title: "",
-      contents: JSON.stringify([]),
-      start_date: new Date().toISOString(),
-      end_date: new Date().toISOString(),
-    });
+  const createMutation = useMutation({
+    mutationFn: () =>
+      createTodo({
+        title: "",
+        contents: JSON.stringify([]),
+        start_date: new Date().toISOString(),
+        end_date: new Date().toISOString(),
+      }),
+    onSuccess: (data) => {
+      toast.success("데이터 추가 성공!", {
+        description: `새로운 할일이 등록 되었습니다.`,
+        duration: 3000,
+      });
 
-    if (error) {
+      router.push(`/create/${data.data.id}`);
+      setSidebarState("createTodo");
+    },
+    onError: (error) => {
       toast.error("데이터 추가 실패", {
         description: `데이터를 추가하는데 실패하였습니다. ${error.message}`,
         duration: 3000,
       });
-    }
-    toast.success("데이터 추가 성공!", {
-      description: `새로운 할일이 등록 되었습니다.`,
-      duration: 3000,
-    });
-
-    // 데이터 추가 성공시 할일 등록창으로 이동시킴
-    // http://localhost:3000/create/[data.id] 로 이동
-    router.push(`/create/${data?.id}`);
-  };
+    },
+  });
 
   useEffect(() => {
     if (sidebarState !== "default") {
@@ -57,9 +60,10 @@ function Home() {
         <Button
           variant={"outline"}
           className="w-full bg-transparent text-orange-500 border-orange-400 hover:bg-orange-50 hover:text-orange-500"
-          onClick={onCreate}
+          disabled={createMutation.isPending}
+          onClick={() => createMutation.mutate()}
         >
-          Add New page
+          {createMutation.isPending ? "Add...." : " Add New page"}
         </Button>
       </div>
     </div>

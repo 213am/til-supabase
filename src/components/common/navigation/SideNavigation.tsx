@@ -14,7 +14,6 @@ import { signOut } from "@/lib/supabase/actions";
 import { useUserStore } from "@/app/store/useUserStore";
 
 function SideNavigation({ user }: { user: any }) {
-  console.log("props 로 받은 데이터 : ", user);
   const { name, email, setUser } = useUserStore();
 
   const router = useRouter();
@@ -60,7 +59,6 @@ function SideNavigation({ user }: { user: any }) {
   // Read
   const fetchGetTodos = async () => {
     const { data, error, status } = await getTodos();
-    console.log("할일 목록 가져오기 : ", data);
     // 에러 발생 시 처리
     if (error) {
       toast.error("데이터 조회 실패", {
@@ -70,10 +68,6 @@ function SideNavigation({ user }: { user: any }) {
       return;
     }
     // 데이터 조회 성공 시 처리
-    toast.success("데이터 조회 성공!", {
-      description: `할일 목록을 확인해보세요.`,
-      duration: 3000,
-    });
 
     setTodos(data);
   };

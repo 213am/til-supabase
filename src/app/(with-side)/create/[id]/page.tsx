@@ -22,6 +22,8 @@ import Image from "next/image";
 import { ChevronLeftIcon } from "lucide-react";
 import { sidebarStateAtom } from "@/app/store";
 import { useAtom } from "jotai";
+import { useMutation, useQueries, useQuery } from "@tanstack/react-query";
+import { queryClient } from "@/providers/ReactQueryProvider";
 
 // contents 배열에 대한 타입 정의
 export interface BoardContents {
@@ -47,44 +49,49 @@ function Page() {
   const [sidebarState, setSidebarState] = useAtom(sidebarStateAtom);
 
   // Page 삭제 함수
-  const deleteBoardHandler = async () => {
-    console.log(id, "삭제하기");
-    const { error, status } = await deleteTodo(Number(id));
-
-    console.log(error);
-    console.log(status);
-    if (!error) {
+  const deleteBoardMutation = useMutation({
+    mutationFn: () => {
+      return deleteTodo(Number(id));
+    },
+    onSuccess: () => {
       setSidebarState("Page Delete");
-    }
-  };
+    },
+    onError: (error) => {
+      console.log(error.message);
+    },
+  });
 
   // title 저장 함수
-  const saveTitleHandler = async () => {
-    console.log(title);
-    const { data, error, status } = await updateTodoTitle(
-      Number(id),
-      title,
-      startDate,
-      endDate
-    );
-
-    // jotai 의 state 갱신
-    setSidebarState("Upadte Page");
-  };
+  const saveTitleMutation = useMutation({
+    mutationFn: () => {
+      return updateTodoTitle(Number(id), title, startDate, endDate);
+    },
+    onSuccess: () => {
+      // jotai 의 state 갱신
+      setSidebarState("Upadte Page");
+    },
+    onError: (error) => {
+      console.log(error.message);
+    },
+  });
 
   // 컨텐츠 삭제 함수
-  const deleteContent = async (deleteBoardId: string) => {
-    console.log("삭제할 컨텐츠 boardId", deleteBoardId);
-    const tempContent = contents.filter(
-      (item) => item.boardId !== deleteBoardId
-    );
-
-    const { data, error, status } = await updateTodo(
-      Number(id),
-      JSON.stringify(tempContent)
-    );
-    setContents([...tempContent]);
-  };
+  const deleteContentMutaion = useMutation({
+    mutationFn: (deleteBoardId: string) => {
+      const tempContent = contents.filter(
+        (item) => item.boardId !== deleteBoardId
+      );
+      return updateTodo(Number(id), JSON.stringify(tempContent)).then(
+        () => tempContent
+      );
+    },
+    onSuccess: (updatedContent) => {
+      setContents([...updatedContent]);
+    },
+    onError: (error) => {
+      console.log(error.message);
+    },
+  });
 
   // 컨텐츠 데이터 업데이트 함수
   const updateContent = async (newData: BoardContents) => {
@@ -102,30 +109,7 @@ function Page() {
       Number(id),
       JSON.stringify(newContentArr)
     );
-    fetchGetTodoId();
-  };
-
-  // id 에 해당하는 Row 데이터를 읽어오기
-  const fetchGetTodoId = async () => {
-    const { data, error, status } = await getTodoId(Number(id));
-    // 에러 발생시
-    if (error) {
-      toast.error("데이터 호출 실패", {
-        description: `데이터 호출에 실패하였습니다. ${error.message}`,
-        duration: 3000,
-      });
-      return;
-    }
-    // 최종 데이터
-    toast.success("데이터 호출 성공", {
-      description: "데이터 호출에 성공하였습니다",
-      duration: 3000,
-    });
-    setTitle(data?.title ? data.title : "");
-    setStartDate(data?.start_date ? data.start_date : new Date());
-    setEndDate(data?.end_date ? data.end_date : new Date());
-    const temp = data?.contents ? JSON.parse(data.contents as string) : [];
-    setContents(temp);
+    queryClient.invalidateQueries({ queryKey: ["todos"] });
   };
 
   // contents 의 isCompleted 가 true 인 갯수 파악하기
@@ -138,6 +122,34 @@ function Page() {
     });
     setCompleteCount(count);
   };
+
+  // id 에 해당하는 Row 데이터를 읽어오기
+  const { error, data: queryData } = useQuery({
+    queryKey: ["todos"],
+    queryFn: () => getTodoId(Number(id)),
+  });
+  // 에러 발생 시
+  if (error) {
+    toast.error("데이터 호출 실패", {
+      description: `데이터 호출에 실패하였습니다. ${error.message}`,
+      duration: 3000,
+    });
+  }
+
+  useEffect(() => {
+    // 성공 시
+    if (!queryData) return;
+
+    setTitle(queryData.data?.title ?? "");
+    setStartDate(queryData.data?.start_date ?? new Date());
+    setEndDate(queryData.data?.end_date ?? new Date());
+
+    const temp = queryData.data?.contents
+      ? JSON.parse(queryData.data.contents as string)
+      : [];
+
+    setContents(temp);
+  }, [queryData]);
 
   const initData: BoardContents = {
     boardId: nanoid(),
@@ -174,11 +186,12 @@ function Page() {
     });
 
     // 자료 새로 추출
-    fetchGetTodoId();
+    queryClient.invalidateQueries({ queryKey: ["todos"] });
   };
 
   useEffect(() => {
-    fetchGetTodoId();
+    setSidebarState("add Page");
+    queryClient.invalidateQueries({ queryKey: ["todos"] });
   }, []);
 
   useEffect(() => {
@@ -195,11 +208,19 @@ function Page() {
           </Button>
         </div>
         <div className="flex gap-2">
-          <Button variant={"outline"} onClick={saveTitleHandler}>
-            저장
+          <Button
+            variant={"outline"}
+            disabled={saveTitleMutation.isPending}
+            onClick={() => saveTitleMutation.mutate()}
+          >
+            {saveTitleMutation.isPending ? "저장중..." : "저장"}
           </Button>
-          <Button variant={"destructive"} onClick={deleteBoardHandler}>
-            삭제
+          <Button
+            variant={"destructive"}
+            disabled={deleteBoardMutation.isPending}
+            onClick={() => deleteBoardMutation.mutate()}
+          >
+            {deleteBoardMutation.isPending ? "삭제중..." : "삭제"}
           </Button>
         </div>
       </div>
@@ -283,7 +304,7 @@ function Page() {
                 key={item.boardId}
                 item={item}
                 updateContent={updateContent}
-                deleteContent={deleteContent}
+                deleteContent={() => deleteContentMutaion.mutate(item.boardId)}
               />
             ))}
           </div>
