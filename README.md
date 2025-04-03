@@ -129,3 +129,34 @@ Sitemap: https://til-supabase.vercel.app/sitemap.xml
 <url><loc>https://til-supabase.vercel.app/basic/sample01</loc><lastmod>2023-09-11T23:52:17.732Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 </urlset>
 ```
+
+## git push 이후 robots.txt 수집 요청 실행
+
+-
+
+# 구글 서치 등록하기
+
+```html
+<meta
+  name="google-site-verification"
+  content="EmMsAfPkyRr7sIthihwVf_nAkrhB5G6ZsGV08n7tpXo"
+/>
+```
+
+- `src/app/layout.tsx`
+
+```tsx
+export const metadata: Metadata = {
+  title: "Todo",
+  description: "Todo Supabase",
+  openGraph: {
+    title: "Todo",
+    description: "Todo Supabase",
+    images: [{ url: "/thumbnail.png" }],
+  },
+  other: {
+    "naver-site-verification": "163c2b147c1eaf117e891539c047350490f8c728",
+    "google-site-verification": "EmMsAfPkyRr7sIthihwVf_nAkrhB5G6ZsGV08n7tpXo",
+  },
+};
+```
