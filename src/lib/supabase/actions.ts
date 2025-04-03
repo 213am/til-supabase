@@ -12,7 +12,7 @@ const signInWith = (provider: Provider) => async () => {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
-      redirectTo: "https://til-supabase.vercel.app/auth/callback",
+      redirectTo: auth_callback_url,
     },
   });
 

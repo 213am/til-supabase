@@ -19,6 +19,9 @@ export const metadata: Metadata = {
     description: "Todo Supabase",
     images: [{ url: "/thumbnail.png" }],
   },
+  other: {
+    "naver-site-verification": "163c2b147c1eaf117e891539c047350490f8c728",
+  },
 };
 
 export default function RootLayout({

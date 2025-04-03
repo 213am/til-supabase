@@ -54,4 +54,33 @@ export const metadata: Metadata = {
 - 환경 변수 등록 주의
   - `.env.production`
   - SITE_URL 은 배포 후 주소로 변경
-  - `.env.local` 에서도 SITE_URL 확인
+
+# 네이버 서치 어드바이저 등록하기
+
+- `https://searchadvisor.naver.com`
+- **웹 마스터 도구** 버튼 클릭 `https://searchadvisor.naver.com/console/board`
+- `사이트 소유확인 > HTML 태그 복사` 로 이동
+
+```html
+<meta
+  name="naver-site-verification"
+  content="163c2b147c1eaf117e891539c047350490f8c728"
+/>
+```
+
+- `src/app/layout.tsx`
+
+```tsx
+export const metadata: Metadata = {
+  title: "Todo",
+  description: "Todo Supabase",
+  openGraph: {
+    title: "Todo",
+    description: "Todo Supabase",
+    images: [{ url: "/thumbnail.png" }],
+  },
+  other: {
+    "naver-site-verification": "163c2b147c1eaf117e891539c047350490f8c728",
+  },
+};
+```
