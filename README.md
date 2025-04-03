@@ -54,3 +54,4 @@ export const metadata: Metadata = {
 - 환경 변수 등록 주의
   - `.env.production`
   - SITE_URL 은 배포 후 주소로 변경
+  - `.env.local` 에서도 SITE_URL 확인
