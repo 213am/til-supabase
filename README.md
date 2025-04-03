@@ -160,3 +160,88 @@ export const metadata: Metadata = {
   },
 };
 ```
+
+## 로그인 안해도 xml, robots.txt 접근 권한
+
+- `src/middleware.ts` 에 추가
+  - robots.txt
+  - sitemap.xml
+  - sitemap-0.xml
+
+```ts
+import { type NextRequest } from "next/server";
+import { updateSession } from "@/lib/supabase/middleware";
+
+export async function middleware(request: NextRequest) {
+  return await updateSession(request);
+}
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * Feel free to modify this pattern to include more paths.
+     */
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|sitemap-0.xml.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
+};
+```
+
+## 구글 콘솔
+
+- 승인된 JavaScript 원본
+
+  - http://localhost:3000
+  - https://til-supabase-kappa.vercel.app
+
+- 승인된 리디렉션 URI
+  - http://localhost:3000/auth/callback
+  - https://til-supabase-kappa.vercel.app/auth/callback
+  - https://dmhuuwcbafftkmuwvqin.supabase.co/auth/v1/callback
+
+## 인증시 로그인 안된 경우에 화면에 에러메세지 출력 ( chatGpt 등 검색어로 활용 가능하도록 )
+
+- `src/app/auth/callback/route.ts`
+
+```ts
+import { NextRequest, NextResponse } from "next/server";
+import { createServerSideClient } from "@/lib/supabase/server";
+
+export async function GET(request: NextRequest) {
+  const { searchParams, origin } = new URL(request.url);
+  const code = searchParams.get("code");
+  const next = searchParams.get("next") ?? "/";
+
+  if (code) {
+    const supabase = await createServerSideClient();
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (error) {
+      // 👇 여기가 추가된 에러 메시지 반환 부분입니다
+      return new Response("❌ Supabase 인증 에러: " + error.message, {
+        status: 500,
+      });
+    }
+
+    // ✅ 성공 시 정상 리디렉션 처리
+    const forwardedHost = request.headers.get("x-forwarded-host");
+    const isLocalEnv = process.env.NODE_ENV === "development";
+
+    if (isLocalEnv) {
+      return NextResponse.redirect(`${origin}${next}`);
+    } else if (forwardedHost) {
+      return NextResponse.redirect(`https://${forwardedHost}${next}`);
+    } else {
+      return NextResponse.redirect(`${origin}${next}`);
+    }
+  }
+
+  // code 값 자체가 없는 경우
+  return new Response("❌ 인증 코드 없음 (Missing ?code=)", {
+    status: 400,
+  });
+}
+```
