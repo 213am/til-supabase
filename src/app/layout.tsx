@@ -14,6 +14,11 @@ const roboto = Roboto({
 export const metadata: Metadata = {
   title: "Todo",
   description: "Todo Supabase",
+  openGraph: {
+    title: "Todo",
+    description: "Todo Supabase",
+    images: [{ url: "/thumbnail.png" }],
+  },
 };
 
 export default function RootLayout({
