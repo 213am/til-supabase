@@ -49,3 +49,8 @@ export const metadata: Metadata = {
   - https://github.com/213am/til-next-15/tree/06-deploy
 
 ## Vercel 배포
+
+- https://vercel.com/213ams-projects-1e986e65
+- 환경 변수 등록 주의
+  - `.env.production`
+  - SITE_URL 은 배포 후 주소로 변경

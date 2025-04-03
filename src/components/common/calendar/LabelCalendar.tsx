@@ -17,9 +17,9 @@ import { Dispatch, SetStateAction } from "react";
 interface LabelCalendarProps {
   label: string;
   required: boolean;
-  selectedDate: Date | string;
+  selectedDate?: Date | string;
   // onDateChange: (date: Date | undefined) => void;
-  onDateChange: Dispatch<SetStateAction<string | Date>>;
+  onDateChange?: Dispatch<SetStateAction<string | Date>>;
 }
 // required : true 면  날짜 선택 불가
 // required : false 면  날짜 선택 가능
@@ -61,7 +61,7 @@ function LabelCalendar({
                   : selectedDate
               }
               onSelect={(date) => {
-                if (date) onDateChange(date);
+                if (date) onDateChange?.(date);
               }}
               initialFocus
             />
