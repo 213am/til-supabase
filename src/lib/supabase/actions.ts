@@ -18,6 +18,9 @@ const signInWith = (provider: Provider) => async () => {
 
   console.log(data);
 
+  console.log("📦 auth_callback_url:", auth_callback_url);
+  console.log("📦 Supabase returns redirect URL:", data?.url);
+
   if (error) {
     console.log(error);
   }
